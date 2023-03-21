@@ -11,8 +11,9 @@
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddHostedService<DatabaseService>();
-
+            //builder.Services.AddHostedService<DatabaseService>();
+            
+            ConsoleLogger.Install();
             if (!string.IsNullOrWhiteSpace(builder.Configuration["ApplicationCredentialsPath"]))
             {
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", builder.Configuration["ApplicationCredentialsPath"]);

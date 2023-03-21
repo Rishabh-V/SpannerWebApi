@@ -1,4 +1,5 @@
 ﻿using Google.Cloud.Spanner.Data;
+using Google.Cloud.Spanner.V1;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -21,8 +22,8 @@ public class SingersController : ControllerBase
     // GET: api/<SingersController>
     [HttpGet]
     public async IAsyncEnumerable<Singer> GetAsync()
-    {
-        using var connection = new SpannerConnection(_connectionString);
+    {       
+        using var connection = GetConnection();
         connection.Open();
         var cmd = connection.CreateSelectCommand("SELECT * FROM Singers");
         var reader = await cmd.ExecuteReaderAsync();
@@ -34,7 +35,7 @@ public class SingersController : ControllerBase
                 FirstName = reader.GetFieldValue<string>("FirstName"),
                 LastName = reader.GetFieldValue<string>("LastName")
             };
-
+            
             _logger.LogInformation("SingerId :{Id}, FirstName: {FirstName}, LastName: {LastName}", singer.Id, singer.FirstName, singer.LastName); 
             yield return singer;
         }
@@ -44,7 +45,7 @@ public class SingersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Singer>> GetByIdAsync(long id)
     {
-        using var connection = new SpannerConnection(_connectionString);
+        using var connection = GetConnection();
         connection.Open();
         var cmd = connection.CreateSelectCommand("SELECT * FROM Singers WHERE SingerId=@id", new SpannerParameterCollection { { "id", SpannerDbType.Int64, id } });
         var reader = await cmd.ExecuteReaderAsync();
@@ -70,7 +71,7 @@ public class SingersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Singer>> PostAsync([FromBody] Singer value)
     {
-        using var connection = new SpannerConnection(_connectionString);
+        using var connection = GetConnection();
         connection.Open();
         var cmd = connection.CreateInsertCommand("Singers", new SpannerParameterCollection
                 {
@@ -87,7 +88,7 @@ public class SingersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> PutAsync(long id, [FromBody] Singer value)
     {
-        using var connection = new SpannerConnection(_connectionString);
+        using var connection = GetConnection();
         connection.Open();
         var cmd = connection.CreateUpdateCommand("Singers", new SpannerParameterCollection
                 {
@@ -104,7 +105,7 @@ public class SingersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAsync(long id)
     {
-        using var connection = new SpannerConnection(_connectionString);
+        using var connection = GetConnection();
         connection.Open();
         var cmd = connection.CreateDeleteCommand("Singers", new SpannerParameterCollection
         {
@@ -114,4 +115,12 @@ public class SingersController : ControllerBase
         _logger.LogInformation("Rows {Rows} deleted while deleting Singer with ID {ID}", rowsAffected, id);
         return rowsAffected == 0 ? NotFound() : NoContent();
     }
+
+    [NonAction]
+    public SpannerConnection GetConnection() =>
+       new SpannerConnection(new SpannerConnectionStringBuilder(_connectionString)
+       {
+           SessionPoolManager = SessionPoolManager.Create(new SessionPoolOptions(), ConsoleLogger.Instance),
+           LogCommitStats = true
+       });
 }
