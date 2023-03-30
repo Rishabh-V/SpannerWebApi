@@ -1,5 +1,4 @@
 ﻿using Google.Cloud.Spanner.Data;
-using Grpc.Core;
 
 namespace SpannerWebApi;
 
